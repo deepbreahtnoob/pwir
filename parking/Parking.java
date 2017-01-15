@@ -7,46 +7,61 @@
  */
 
 
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 public class Parking {
  	public static void main(String[] args) {
-	  new Zwierze("Kot").start();
-	  new Zwierze("Pies").start();
+ 		
+		for(int i=1; i <=100 ;i++) {
+			new Samochod("S"+i).start();			
+			try {	 	
+			 	Thread.sleep((long)(Math.random()*500));		
+			} catch (InterruptedException e) {
+				System.out.println("B³¹d");
+		 	}
+		}
  	}
 }
 
-class Zwierze extends Thread {
- 	private static final Semaphore semafor = new Semaphore(1, true);
+class Samochod extends Thread {
+ 	private static final Semaphore semafor = new Semaphore(20, true);
  	private String nazwa;
 
- 	public Zwierze (String nazwa) {
+ 	public Samochod (String nazwa) {
  		this.nazwa = nazwa;
+ 	}
+ 	public static Semaphore getSemaphore(){
+ 		return semafor;
  	}
 
  @Override
  public void run() {
- 	while(true) {
+ 	
+ 	 boolean flaga = false;
+ 	 
 	 try {	 	
-	 	System.out.println(nazwa + " usiluje dostac sie do ogrodu");
-	 	semafor.acquire();
-	 	System.out.println(nazwa + " jest w ogrodzie");
-	 	sleep((long)(Math.random()*10000));
+	 	System.out.println(nazwa + " jedzie na parking...");
+	 	if (semafor.tryAcquire()) {
+		 	System.out.println(nazwa + " zaparkowa³");
+		 	sleep((long)(Math.random()*1000));
+		} else {
+			if(Math.random() < 0.75) {
+				System.out.println(nazwa + " ustawi³ siê w kolejce");
+				semafor.acquire();
+				System.out.println(nazwa + " zaparkowa³");
+				sleep((long)(Math.random()*1000));
+				flaga = true;
+			} else {
+				System.out.println(nazwa + " pojecha³ na inny parking");
+				flaga = false;
+			}
+		}
 	
 	 } catch (InterruptedException e) {
 	 	System.out.println("B³¹d");
 	 } finally {
-		 System.out.println(nazwa + " opuœci³ ogrod");
-		 semafor.release();
+		 System.out.println(nazwa + " opuszcza parking");
+		 if(flaga){semafor.release();};
 	 }
-	 try {	 	
-	 	System.out.println(nazwa + " wraca do domu");
-	 	System.out.println(nazwa + " odpoczywa do domu");
-	 	sleep((long)(Math.random()*10000));
-	
-	 } catch (InterruptedException e) {
-	 	System.out.println("B³¹d");
- 	 }
-  	}
  }
 }
